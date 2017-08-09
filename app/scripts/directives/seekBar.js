@@ -16,13 +16,23 @@
             // the template replaces the directive's elemnt. if false it would replace the contents of the directive's element.
             restrict: 'E',
             //instructs Angular to treat as an element directive and run if it finds <seek-bar> in HTML
-            scope: { },
+            scope: {
+                onChange: '&'
+            },
             link: function(scope, element, attributes) {
                 scope.value = 0;
                 scope.max = 100;
 
                 // holds the element that matches the directive (<seek-bar>) as a jQuery object
                 var seekBar = $(element);
+
+                attributes.$observe('value', function(newValue) {
+                    scope.value = newValue;
+                });
+
+                attributes.$observe('max', function(newValue) {
+                    scope.max = newValue;
+                });
 
                 var percentString = function () {
                     var value = scope.value;
@@ -43,6 +53,7 @@
                 scope.onClickSeekBar = function(event) {
                     var percent = calculatePercent(seekBar, event);
                     scope.value = percent * scope.max;
+                    notifyOnChange(scope.value);
                 };
 
                 scope.trackThumb = function() {
@@ -50,6 +61,7 @@
                         var percent = calculatePercent(seekBar, event);
                         scope.$apply(function() {
                             scope.value = percent * scope.max;
+                            notifyOnChange(scope.value);
                         });
                     });
 
@@ -57,6 +69,12 @@
                         $document.unbind('mousemove.thumb');
                         $document.unbind('mouseup.thumb');
                     });
+                };
+                
+                var notifyOnChange = function(newValue) {
+                    if (typeof scope.onChange === 'function') {
+                        scope.onChange({value: newValue});
+                    }
                 };
             }
         };
